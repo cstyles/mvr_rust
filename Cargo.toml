@@ -1,0 +1,8 @@
+[package]
+name = "mvr_rust"
+version = "0.1.0"
+authors = ["Collin Styles <collingstyles@gmail.com>"]
+
+[dependencies]
+regex = "1"
+clap = "2.32.0"
