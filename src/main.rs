@@ -12,11 +12,16 @@ fn main() {
 fn real_main() -> i32 {
     let args = get_args();
 
-    let match_regex = args.value_of("match_regex").unwrap();
+    let mut match_regex = String::from(args.value_of("match_regex").unwrap());
     let rename_regex = args.value_of("rename_regex").unwrap();
     let dry_run = args.is_present("dry_run");
+    let full_match = args.is_present("full_match");
 
-    let re = Regex::new(match_regex).unwrap();
+    if full_match {
+        match_regex = format!("^{}$", match_regex);
+    }
+
+    let re = Regex::new(match_regex.as_str()).unwrap();
 
     let files: Vec<&str> = args.values_of("files").unwrap().collect();
     let mut new_files = Vec::with_capacity(files.len());
@@ -67,5 +72,8 @@ fn get_args<'a>() -> ArgMatches<'a> {
         .arg(Arg::with_name("dry_run")
                  .short("n")
                  .long("dry-run"))
+        .arg(Arg::with_name("full_match")
+                 .short("m")
+                 .long("full-match"))
         .get_matches()
 }
