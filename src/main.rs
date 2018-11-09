@@ -1,7 +1,7 @@
 extern crate clap;
 extern crate regex;
 
-use clap::{Arg, App, ArgMatches};
+use clap::{App, Arg, ArgMatches};
 use regex::Regex;
 
 fn main() {
@@ -27,22 +27,24 @@ fn real_main() -> i32 {
     let mut new_files = Vec::with_capacity(files.len());
     let mut hs = std::collections::HashSet::with_capacity(files.len());
 
+    // Create a new list of all the renamed files
     for file in &files {
         new_files.push(re.replace_all(file, rename_regex));
     }
 
+    // Check for collisions in the renamed file list
     for new_file in &new_files {
         hs.insert(new_file);
     }
 
     if hs.len() < new_files.len() {
         println!("Collision exists in new file names. Aborting...");
-        return 1
+        return 1;
     }
 
     for (file, new_file) in files.iter().zip(&new_files) {
         if file == new_file {
-            continue
+            continue;
         }
 
         println!("{} => {}", file, new_file);
@@ -52,7 +54,7 @@ fn real_main() -> i32 {
         }
     }
 
-    return 0
+    return 0;
 }
 
 fn get_args<'a>() -> ArgMatches<'a> {
@@ -71,9 +73,11 @@ fn get_args<'a>() -> ArgMatches<'a> {
                  .required(true))
         .arg(Arg::with_name("dry_run")
                  .short("n")
-                 .long("dry-run"))
+                 .long("dry-run")
+                 .help("Print changes but don't actually rename any files"))
         .arg(Arg::with_name("full_match")
                  .short("m")
-                 .long("full-match"))
+                 .long("full-match")
+                 .help("Only rename a file if its filepath is fully matched"))
         .get_matches()
 }
