@@ -49,12 +49,12 @@ fn real_main() -> i32 {
 
         println!("{} => {}", file, new_file);
 
-        if dry_run == false {
+        if !dry_run {
             std::fs::rename(file, new_file.to_string()).unwrap();
         }
     }
 
-    return 0;
+    0
 }
 
 fn get_args<'a>() -> ArgMatches<'a> {
@@ -62,22 +62,20 @@ fn get_args<'a>() -> ArgMatches<'a> {
         .version("0.1")
         .author("Collin Styles <collingstyles@gmail.com")
         .about("The mv coreutil but with regexes")
-        .arg(Arg::with_name("match_regex")
-                 .index(1)
-                 .required(true))
-        .arg(Arg::with_name("rename_regex")
-                 .index(2)
-                 .required(true))
-        .arg(Arg::with_name("files")
-                 .multiple(true)
-                 .required(true))
-        .arg(Arg::with_name("dry_run")
-                 .short("n")
-                 .long("dry-run")
-                 .help("Print changes but don't actually rename any files"))
-        .arg(Arg::with_name("full_match")
-                 .short("m")
-                 .long("full-match")
-                 .help("Only rename a file if its filepath is fully matched"))
+        .arg(Arg::with_name("match_regex").index(1).required(true))
+        .arg(Arg::with_name("rename_regex").index(2).required(true))
+        .arg(Arg::with_name("files").multiple(true).required(true))
+        .arg(
+            Arg::with_name("dry_run")
+                .short("n")
+                .long("dry-run")
+                .help("Print changes but don't actually rename any files"),
+        )
+        .arg(
+            Arg::with_name("full_match")
+                .short("m")
+                .long("full-match")
+                .help("Only rename a file if its filepath is fully matched"),
+        )
         .get_matches()
 }
