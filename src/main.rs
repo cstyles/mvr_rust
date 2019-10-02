@@ -1,6 +1,3 @@
-extern crate clap;
-extern crate regex;
-
 use clap::{App, Arg, ArgMatches};
 use regex::Regex;
 
