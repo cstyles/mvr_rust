@@ -21,7 +21,13 @@ fn real_main() -> i32 {
         match_regex = format!("^{}$", match_regex);
     }
 
-    let re = Regex::new(match_regex.as_str()).unwrap();
+    let re = match Regex::new(match_regex.as_str()) {
+        Ok(regex) => regex,
+        Err(err) => {
+            eprintln!("{}", err);
+            return 1;
+        }
+    };
 
     let files: Vec<&str> = args.values_of("files").unwrap().collect();
     let mut new_files = Vec::with_capacity(files.len());
@@ -38,7 +44,7 @@ fn real_main() -> i32 {
     }
 
     if hs.len() < new_files.len() {
-        println!("Collision exists in new file names. Aborting...");
+        eprintln!("ERROR: Collision exists in new file names. Aborting...");
         return 1;
     }
 
@@ -50,7 +56,10 @@ fn real_main() -> i32 {
         println!("{} => {}", file, new_file);
 
         if !dry_run {
-            std::fs::rename(file, new_file.to_string()).unwrap();
+            if let Err(err) = std::fs::rename(file, new_file.to_string()) {
+                eprintln!("ERROR: {}", err);
+                return 1;
+            }
         }
     }
 
