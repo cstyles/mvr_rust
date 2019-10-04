@@ -1,12 +1,8 @@
 use clap::{App, Arg, ArgMatches};
 use regex::RegexBuilder;
+use std::process::exit;
 
 fn main() {
-    let exit_code = real_main();
-    std::process::exit(exit_code);
-}
-
-fn real_main() -> i32 {
     let args = get_args();
 
     let mut match_regex = String::from(args.value_of("match_regex").unwrap());
@@ -23,13 +19,10 @@ fn real_main() -> i32 {
     let mut regex_builder = RegexBuilder::new(match_regex.as_str());
     regex_builder.case_insensitive(ignore_case);
 
-    let re = match regex_builder.build() {
-        Ok(regex) => regex,
-        Err(err) => {
-            eprintln!("{}", err);
-            return 1;
-        }
-    };
+    let re = regex_builder.build().unwrap_or_else(|err| {
+        eprintln!("{}", err);
+        exit(1);
+    });
 
     let files: Vec<&str> = args.values_of("files").unwrap().collect();
     let mut new_files = Vec::with_capacity(files.len());
@@ -47,7 +40,7 @@ fn real_main() -> i32 {
 
     if hs.len() < new_files.len() {
         eprintln!("ERROR: Collision exists in new file names. Aborting...");
-        return 1;
+        exit(1);
     }
 
     for (file, new_file) in files.iter().zip(&new_files) {
@@ -60,12 +53,12 @@ fn real_main() -> i32 {
         if !dry_run {
             if let Err(err) = std::fs::rename(file, new_file.to_string()) {
                 eprintln!("ERROR: {}", err);
-                return 1;
+                exit(1);
             }
         }
     }
 
-    0
+    exit(0);
 }
 
 fn get_args<'a>() -> ArgMatches<'a> {
