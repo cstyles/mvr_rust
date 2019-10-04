@@ -1,5 +1,5 @@
 use clap::{App, Arg, ArgMatches};
-use regex::Regex;
+use regex::RegexBuilder;
 
 fn main() {
     let exit_code = real_main();
@@ -11,14 +11,19 @@ fn real_main() -> i32 {
 
     let mut match_regex = String::from(args.value_of("match_regex").unwrap());
     let rename_regex = args.value_of("rename_regex").unwrap();
+
     let dry_run = args.is_present("dry_run");
     let full_match = args.is_present("full_match");
+    let ignore_case = args.is_present("ignore_case");
 
     if full_match {
         match_regex = format!("^{}$", match_regex);
     }
 
-    let re = match Regex::new(match_regex.as_str()) {
+    let mut regex_builder = RegexBuilder::new(match_regex.as_str());
+    regex_builder.case_insensitive(ignore_case);
+
+    let re = match regex_builder.build() {
         Ok(regex) => regex,
         Err(err) => {
             eprintln!("{}", err);
@@ -82,6 +87,12 @@ fn get_args<'a>() -> ArgMatches<'a> {
                 .short("m")
                 .long("full-match")
                 .help("Only rename a file if its filepath is fully matched"),
+        )
+        .arg(
+            Arg::with_name("ignore_case")
+                .short("i")
+                .long("ignore-case")
+                .help("Search case-insensitively"),
         )
         .get_matches()
 }
