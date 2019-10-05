@@ -1,5 +1,9 @@
 use clap::{App, Arg, ArgMatches};
 use regex::RegexBuilder;
+
+use std::io;
+use std::io::prelude::*;
+use std::path::Path;
 use std::process::exit;
 
 fn main() {
@@ -11,6 +15,7 @@ fn main() {
     let dry_run = args.is_present("dry_run");
     let full_match = args.is_present("full_match");
     let ignore_case = args.is_present("ignore_case");
+    let prompt = args.is_present("prompt");
 
     if full_match {
         match_regex = format!("^{}$", match_regex);
@@ -25,12 +30,14 @@ fn main() {
     });
 
     let files: Vec<&str> = args.values_of("files").unwrap().collect();
+
     let mut new_files = Vec::with_capacity(files.len());
     let mut hs = std::collections::HashSet::with_capacity(files.len());
 
     // Create a new list of all the renamed files
     for file in &files {
-        new_files.push(re.replace_all(file, rename_regex));
+        let new_file = re.replace_all(file, rename_regex).into_owned();
+        new_files.push(new_file);
     }
 
     // Check for collisions in the renamed file list
@@ -51,9 +58,20 @@ fn main() {
         println!("{} => {}", file, new_file);
 
         if !dry_run {
-            if let Err(err) = std::fs::rename(file, new_file.to_string()) {
-                eprintln!("ERROR: {}", err);
-                exit(1);
+            let path = Path::new(new_file);
+
+            if prompt && path.exists() {
+                print!("overwrite {}? (y/n [n]) ", new_file);
+                io::stdout().flush().unwrap();
+
+                let response = read_from_stdin().to_ascii_lowercase();
+                let response = response.trim();
+
+                if response == "y" {
+                    rename(file, new_file);
+                }
+            } else {
+                rename(file, new_file);
             }
         }
     }
@@ -83,9 +101,29 @@ fn get_args<'a>() -> ArgMatches<'a> {
         )
         .arg(
             Arg::with_name("ignore_case")
-                .short("i")
+                .short("c")
                 .long("ignore-case")
                 .help("Search case-insensitively"),
         )
+        .arg(
+            Arg::with_name("prompt")
+                .short("i")
+                .long("prompt")
+                .help("Prompt before overwriting an existing file"),
+        )
         .get_matches()
+}
+
+fn read_from_stdin() -> String {
+    let mut buffer = String::new();
+    let stdin = io::stdin();
+    stdin.read_line(&mut buffer).unwrap();
+    buffer
+}
+
+fn rename(old_file: &str, new_file: &str) {
+    if let Err(err) = std::fs::rename(old_file, new_file.to_string()) {
+        eprintln!("ERROR: {}", err);
+        exit(1);
+    }
 }
