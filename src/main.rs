@@ -12,10 +12,13 @@ fn main() {
     let mut match_regex = String::from(args.value_of("match_regex").unwrap());
     let rename_regex = args.value_of("rename_regex").unwrap();
 
+    let files: Vec<&str> = args.values_of("files").unwrap().collect();
+
     let dry_run = args.is_present("dry_run");
     let full_match = args.is_present("full_match");
     let ignore_case = args.is_present("ignore_case");
     let prompt = args.is_present("prompt");
+    let quiet = args.is_present("quiet");
 
     if full_match {
         match_regex = format!("^{}$", match_regex);
@@ -28,8 +31,6 @@ fn main() {
         eprintln!("{}", err);
         exit(1);
     });
-
-    let files: Vec<&str> = args.values_of("files").unwrap().collect();
 
     let mut new_files = Vec::with_capacity(files.len());
     let mut hs = std::collections::HashSet::with_capacity(files.len());
@@ -55,7 +56,9 @@ fn main() {
             continue;
         }
 
-        println!("{} => {}", file, new_file);
+        if !quiet {
+            println!("{} => {}", file, new_file);
+        }
 
         if !dry_run {
             let path = Path::new(new_file);
@@ -110,6 +113,12 @@ fn get_args<'a>() -> ArgMatches<'a> {
                 .short("i")
                 .long("prompt")
                 .help("Prompt before overwriting an existing file"),
+        )
+        .arg(
+            Arg::with_name("quiet")
+                .short("q")
+                .long("quiet")
+                .help("Quiet mode"),
         )
         .get_matches()
 }
